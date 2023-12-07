@@ -5,13 +5,12 @@ from urllib.parse import urljoin
 from dateutil import parser
 from playwright.async_api import async_playwright, Locator, Page
 
+from scrappers.scrapper import Scraper
+
 TWEET_SEARCH_URL = "https://nitter.net/search"
 
 
-class NitterScraper:
-    def __init__(self):
-        self._browser = None
-
+class NitterScraper(Scraper):
     async def scrape_tweeter_tweets_by_date(
             self,
             query: str,
