@@ -4,18 +4,17 @@ import httpx
 
 QUERIES = [
     {
-        "query": "elon",
-        "since": "2023-01-01",
-        "until": "2023-02-01",
-        "near": None
-    } for _ in range(5)
+        "q": "elon",
+        "since": "2023-04-01",
+        "until": "2023-05-01",
+    } for _ in range(65)
 ]
 
 
 async def client_get(params):
     async with httpx.AsyncClient(timeout=100000) as client:
         response = await client.get("http://127.0.0.1:8000/search", params=params)
-        print(response.url)
+        print(response.json())
         return response
 
 

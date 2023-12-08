@@ -1,15 +1,14 @@
 import time
 from fastapi import FastAPI
-from scrappers import NitterScraper
+from scrappers import NitterScraper, get_page
 
 app = FastAPI()
 
 
 @app.get("/search")
-async def tweet_search(query: str, since: str = None, until: str = None):
-    scraper = NitterScraper()
+async def tweet_search(q: str, since: str = None, until: str = None):
     start = time.time()
-    result = await scraper.scrape_tweeter_tweets_by_date(query, since, until)
+    result = await get_page(q=q, since=since, until=until)
     end = time.time() - start
     print(end)
     return {"tweets": result}

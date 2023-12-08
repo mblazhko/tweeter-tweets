@@ -18,23 +18,24 @@ HEADERS = {
         "Accept-Language": "uk,uk-UA;q=0.9,sk;q=0.8,en-US;q=0.7,en;q=0.6",
     }
 counter = 0
+
 async def get_page(url=URL, headers=HEADERS, limit:int=10, output:dict={}, **params)->dict:
     async with httpx.AsyncClient(timeout=20) as client:
         # f"https://nitter.net/search?f=tweets&q={query}&since={since}&until={until}&near=",
+    async with httpx.AsyncClient(timeout=100000) as client:
         r = await client.get(
             url=url,
             params=params,
             headers=headers,
         )
+        await asyncio.sleep(4)
         soup = BeautifulSoup(r.text, "html.parser")
-        print(url)
         tweet_cards = soup.select("div.timeline-item")
         for card in tweet_cards:
             if card.select_one(".tweet-link"):
                 username = card.select_one(".username").text
                 tweet = card.select_one(".tweet-link")
                 tweet_id = tweet.get("href").split("/")[-1].replace("#m", "")
-                tweet_text = tweet.text
                 raw_content = card.select_one(".tweet-content.media-body").text
                 date_time = card.select_one(
                     ".tweet-date>a").get("title").replace("·", "")
@@ -48,12 +49,11 @@ async def get_page(url=URL, headers=HEADERS, limit:int=10, output:dict={}, **par
                         }
                     }
                 )
-        pagination = soup.select("div.show-more>a")
-        # output['next_page'] = pagination
+        pagination = soup.select_one("a[text='Load more']")
         if pagination:
             global counter
             counter += 1
-            if counter > limit:
+            if counter >= limit:
                 return output
             return await get_page(url=URL+pagination[-1].get("href"), headers=headers, limit=limit, output=output, **params)
         return output
