@@ -19,7 +19,7 @@ class NitterScraper(Scraper):
     ) -> dict:
         async with async_playwright() as p:
             if not self._browser:
-                self._browser = await p.firefox.launch(headless=False)
+                self._browser = await p.firefox.launch()
             page = await self._browser.new_page(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
             )
