@@ -27,16 +27,22 @@ class NitterScraper(Scraper):
             await page.goto(
                 f"https://nitter.net/search?f=tweets&q={query}&since={since}&until={until}&near="
             )
-            try:
-                result = await self._scrape_pages(page)
-            except TargetClosedError:
-                return {
-                    "message": "There is no results in your request"
-                }
+
+            result = await self.__handle_target_closed_error(page)
 
             await self._browser.close()
 
             return result
+
+    async def __handle_target_closed_error(self, page):
+        try:
+            result = await self._scrape_pages(page)
+        except TargetClosedError:
+            return {
+                "message": "There is no results in your request"
+            }
+
+        return result
 
     async def _scrape_pages(self, page: Page) -> dict:
         result = {}
