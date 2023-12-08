@@ -19,7 +19,7 @@ HEADERS = {
     }
 counter = 0
 async def get_page(url=URL, headers=HEADERS, limit:int=10, output:dict={}, **params)->dict:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=20) as client:
         # f"https://nitter.net/search?f=tweets&q={query}&since={since}&until={until}&near=",
         r = await client.get(
             url=url,
@@ -48,14 +48,14 @@ async def get_page(url=URL, headers=HEADERS, limit:int=10, output:dict={}, **par
                         }
                     }
                 )
-        pagination = soup.select("div.show-more>a")[-1]
+        pagination = soup.select("div.show-more>a")
         # output['next_page'] = pagination
         if pagination:
             global counter
             counter += 1
             if counter > limit:
                 return output
-            return await get_page(url=URL+pagination.get("href"), headers=headers, limit=limit, output=output, **params)
+            return await get_page(url=URL+pagination[-1].get("href"), headers=headers, limit=limit, output=output, **params)
         return output
 
 
