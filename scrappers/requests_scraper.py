@@ -17,12 +17,11 @@ HEADERS = {
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "uk,uk-UA;q=0.9,sk;q=0.8,en-US;q=0.7,en;q=0.6",
     }
-counter = 0
 
-async def get_page(url=URL, headers=HEADERS, limit:int=10, output:dict={}, **params)->dict:
-    async with httpx.AsyncClient(timeout=20) as client:
-        # f"https://nitter.net/search?f=tweets&q={query}&since={since}&until={until}&near=",
-    async with httpx.AsyncClient(timeout=100000) as client:
+
+async def get_page(url=URL, headers=HEADERS, counter = 0, limit:int=5, output:dict={}, **params)->dict:
+    async with httpx.AsyncClient(timeout=2) as client:
+        print(url)
         r = await client.get(
             url=url,
             params=params,
@@ -49,13 +48,13 @@ async def get_page(url=URL, headers=HEADERS, limit:int=10, output:dict={}, **par
                         }
                     }
                 )
-        pagination = soup.select_one("a[text='Load more']")
-        if pagination:
-            global counter
+        pagination = soup.find("a", string="Load more")
+        if pagination:       
             counter += 1
+            print(f"\n\n{counter=}\n\n")
             if counter >= limit:
                 return output
-            return await get_page(url=URL+pagination[-1].get("href"), headers=headers, limit=limit, output=output, **params)
+            output.update(await get_page(url=URL+pagination.get("href"), counter=counter, headers=headers, limit=limit, output=output, **params))
         return output
 
 

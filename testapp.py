@@ -12,9 +12,8 @@ QUERIES = [
 
 
 async def client_get(params):
-    async with httpx.AsyncClient(timeout=100000) as client:
+    async with httpx.AsyncClient() as client:
         response = await client.get("http://127.0.0.1:8000/search", params=params)
-        print(response.json())
         return response
 
 
