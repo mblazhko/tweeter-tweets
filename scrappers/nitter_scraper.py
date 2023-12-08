@@ -3,6 +3,7 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 from dateutil import parser
+from playwright._impl._errors import TargetClosedError
 from playwright.async_api import async_playwright, Locator, Page
 
 from scrappers.scrapper import Scraper
@@ -26,8 +27,12 @@ class NitterScraper(Scraper):
             await page.goto(
                 f"https://nitter.net/search?f=tweets&q={query}&since={since}&until={until}&near="
             )
-
-            result = await self._scrape_pages(page)
+            try:
+                result = await self._scrape_pages(page)
+            except TargetClosedError:
+                return {
+                    "message": "There is no results in your request"
+                }
 
             await self._browser.close()
 
@@ -43,6 +48,8 @@ class NitterScraper(Scraper):
     async def _scrape_one_page(self, page: Page) -> dict:
         one_page_data = {}
         tweets_date = await page.locator(".tweet-date a").all()
+        if not len(tweets_date):
+            await self._browser.close()
         tweets_content = await page.locator(".tweet-content").all()
         for item, content in zip(tweets_date, tweets_content):
             output = await self._get_tweet_info(item, content)
