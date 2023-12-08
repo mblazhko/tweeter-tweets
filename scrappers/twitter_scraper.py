@@ -2,11 +2,8 @@ import asyncio
 import os
 
 from scrappers.scrapper import Scraper
-from datetime import datetime
-from urllib.parse import urljoin
 from dotenv import load_dotenv
-from dateutil import parser
-from playwright.async_api import async_playwright, Locator, Page
+from playwright.async_api import async_playwright, Page
 
 load_dotenv()
 
@@ -21,15 +18,14 @@ class TwitterScraper(Scraper):
         self.__username = username
         self.__password = password
         self.__login = login
-        self._logged_page: Page = None
+        self.__user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 
     async def __login_user(self, login: str, password: str, username: str) -> Page:
-        p = await async_playwright().start()
-        if not self._browser:
-            self._browser = await p.firefox.launch(headless=False)
-        page = await self._browser.new_page(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        await self.__create_browser()
+        context = await self._browser.new_context(
+            user_agent=self.__user_agent
         )
+        page = await context.new_page()
         await page.goto(
             f"https://twitter.com/i/flow/login"
         )
@@ -47,6 +43,8 @@ class TwitterScraper(Scraper):
         await page.click("text=Log in")
         await page.wait_for_url(url="https://twitter.com/home")
 
+        await context.storage_state(path="twitter_state.json")
+
         return page
 
     async def scrape_tweeter_tweets_by_date(
@@ -55,11 +53,19 @@ class TwitterScraper(Scraper):
             since: str = None,
             until: str = None
     ) -> dict:
-        page = await self.__login_user(
-            self.__login,
-            self.__password,
-            self.__username
+        is_file = os.path.isfile("twitter_state.json")
+        if not is_file:
+            await self.__login_user(
+                self.__login,
+                self.__password,
+                self.__username
+            )
+        else:
+            await self.__create_browser()
+        context = await self._browser.new_context(
+            storage_state="twitter_state.json"
         )
+        page = await context.new_page()
         await page.goto("https://twitter.com/search-advanced")
         await page.type("input[name='allOfTheseWords']", query)
 
@@ -98,6 +104,10 @@ class TwitterScraper(Scraper):
 
         await page.click("span[text='Search']")
         await page.wait_for_timeout(timeout=100000)
+
+    async def __create_browser(self):
+        playwright = await async_playwright().start()
+        self._browser = await playwright.firefox.launch(headless=False)
 
 
 if __name__ == '__main__':
