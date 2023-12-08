@@ -7,7 +7,7 @@ QUERIES = [
         "q": "elon",
         "since": "2023-04-01",
         "until": "2023-05-01",
-    } for _ in range(65)
+    } for _ in range(10)
 ]
 
 

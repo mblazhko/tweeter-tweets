@@ -26,7 +26,6 @@ async def get_page(url=URL, headers=HEADERS, limit:int=10, output:dict={}, **par
             params=params,
             headers=headers,
         )
-        await asyncio.sleep(4)
         soup = BeautifulSoup(r.text, "html.parser")
         tweet_cards = soup.select("div.timeline-item")
         for card in tweet_cards:
@@ -47,13 +46,13 @@ async def get_page(url=URL, headers=HEADERS, limit:int=10, output:dict={}, **par
                         }
                     }
                 )
-        pagination = soup.select_one("a[text='Load more']")
+        pagination = soup.find("a", string="Load more")
         if pagination:
             global counter
             counter += 1
             if counter >= limit:
                 return output
-            return await get_page(url=URL+pagination.get("href"), headers=headers, limit=limit, output=output, **params)
+            output.update(await get_page(url=URL+pagination.get("href"), headers=headers, limit=limit, output=output, **params))
         return output
 
 
