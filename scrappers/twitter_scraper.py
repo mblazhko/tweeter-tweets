@@ -20,15 +20,13 @@ class TwitterScraper(Scraper):
         self.__login = login
         self.__user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 
-    async def __login_user(self, login: str, password: str, username: str) -> Page:
+    async def __login_user(
+        self, login: str, password: str, username: str
+    ) -> Page:
         await self.__create_browser()
-        context = await self._browser.new_context(
-            user_agent=self.__user_agent
-        )
+        context = await self._browser.new_context(user_agent=self.__user_agent)
         page = await context.new_page()
-        await page.goto(
-            f"https://twitter.com/i/flow/login"
-        )
+        await page.goto(f"https://twitter.com/i/flow/login")
 
         await page.type("input[autocomplete='username']", login)
         await page.click("text=Next")
@@ -48,17 +46,12 @@ class TwitterScraper(Scraper):
         return page
 
     async def scrape_tweeter_tweets_by_date(
-            self,
-            query: str,
-            since: str = None,
-            until: str = None
+        self, query: str, since: str = None, until: str = None
     ) -> dict:
         is_file = os.path.isfile("twitter_state.json")
         if not is_file:
             await self.__login_user(
-                self.__login,
-                self.__password,
-                self.__username
+                self.__login, self.__password, self.__username
             )
         else:
             await self.__create_browser()
@@ -74,32 +67,32 @@ class TwitterScraper(Scraper):
 
             since_year, since_month, since_day = since_date
             await page.select_option(
-                selector=f"select#SELECTOR_2",
-                value=since_month
+                selector=f"select#SELECTOR_2", value=since_month
             )
             await page.select_option(
                 selector=f"select#SELECTOR_3",
-                value=since_day.replace("0", "") if "0" in since_day else since_day
+                value=since_day.replace("0", "")
+                if "0" in since_day
+                else since_day,
             )
             await page.select_option(
-                selector=f"select#SELECTOR_4",
-                value=since_year
+                selector=f"select#SELECTOR_4", value=since_year
             )
 
         if until:
             until_date = until.split("-")
             until_year, until_month, until_day = until_date
             await page.select_option(
-                selector=f"select#SELECTOR_5",
-                value=until_month
+                selector=f"select#SELECTOR_5", value=until_month
             )
             await page.select_option(
                 selector=f"select#SELECTOR_6",
-                value=until_day.replace("0", "") if "0" in until_day else until_day
+                value=until_day.replace("0", "")
+                if "0" in until_day
+                else until_day,
             )
             await page.select_option(
-                selector=f"select#SELECTOR_7",
-                value=until_year
+                selector=f"select#SELECTOR_7", value=until_year
             )
 
         await page.click("span[text='Search']")
@@ -110,8 +103,10 @@ class TwitterScraper(Scraper):
         self._browser = await playwright.firefox.launch(headless=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     scraper = TwitterScraper(LOGIN, PASSWORD, USERNAME)
-    asyncio.run(scraper.scrape_tweeter_tweets_by_date(
-        query="python", since="2023-12-06", until="2023-12-07"
-    ))
+    asyncio.run(
+        scraper.scrape_tweeter_tweets_by_date(
+            query="python", since="2023-12-06", until="2023-12-07"
+        )
+    )
