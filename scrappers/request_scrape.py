@@ -27,8 +27,13 @@ async def get_page(query, since, until):
         usernames = soup.find_all("a", class_="fullname")
         tweets = soup.find_all("a", class_="tweet-link")
         raw_content = soup.find_all("div", class_="tweet-content media-body")
-        date_times = [x.get("title").replace("·", "") for x in soup.select(".tweet-date>a")]
-        for username, tweet, content, date_time in zip(usernames, tweets, raw_content, date_times):
+        date_times = [
+            x.get("title").replace("·", "")
+            for x in soup.select(".tweet-date>a")
+        ]
+        for username, tweet, content, date_time in zip(
+            usernames, tweets, raw_content, date_times
+        ):
             tweet_id = tweet.get("href").split("/")[-1].replace("#m", "")
             username = username.get_text()
             raw = content.get_text()
@@ -42,5 +47,5 @@ async def get_page(query, since, until):
             print(output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(get_page(query="python", since="2023-1-01", until="2023-1-02"))
