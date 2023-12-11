@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from scrappers import RequestScraper
+import uvicorn
+
 
 app = FastAPI()
 

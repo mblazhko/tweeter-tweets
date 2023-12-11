@@ -26,9 +26,9 @@ class RequestScraper:
         self.__soup = None
         self.output = {}
 
-    async def run_scraper(self, limit: int = 10, **params) -> dict:
-        await self.__get_tweets_by_limit(limit=limit, **params)
-
+    async def run_scraper(self, limit: int = 2, **params) -> dict:
+        self.output.update(await self.__get_tweets_by_limit(limit=limit, **params))
+        await asyncio.sleep(5)
         return self.output
 
     async def __get_tweets_by_limit(self, limit, **params):
@@ -71,8 +71,9 @@ class RequestScraper:
         print(self.__counter)
         output = {}
         for card in tweet_cards:
-            output.update(await self.__get_one_tweet_data(card))
-
+            data = await self.__get_one_tweet_data(card)
+            # await asyncio.sleep(0.5)
+            output.update(data)
         return output
 
     async def __get_one_tweet_data(self, card) -> dict:
@@ -98,7 +99,7 @@ class RequestScraper:
         self, pagination, limit, **params
     ) -> dict | None:
         if pagination:
-            self.__counter += 1
+            
             if self.__counter >= limit:
                 return
             next_page_link = pagination.get("href")
@@ -106,6 +107,7 @@ class RequestScraper:
             self.output.update(
                 await self.__get_tweets_by_limit(limit=limit, **params)
             )
+            self.__counter += 1
 
 
 if __name__ == "__main__":

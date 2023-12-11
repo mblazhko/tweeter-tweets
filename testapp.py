@@ -1,5 +1,7 @@
 import asyncio
 import httpx
+from concurrent.futures import ThreadPoolExecutor
+import requests
 
 PARAMS = {
     "q": "elon",
@@ -13,17 +15,33 @@ import asyncio
 import httpx
 
 
-async def make_request(url, params):
+async def async_make_request(url, params):
     async with httpx.AsyncClient(timeout=100000) as client:
         response = await client.get(url, params=params)
         print(response.status_code, response.json())
 
-
-async def main(url, params):
-    tasks = [make_request(url=url, params=params) for _ in range(65)]
+def make_request(url, params):
+    with httpx.Client(timeout=10000) as client:
+        response = client.get(url, params=params)
+        return response.json()
+        
+async def async_main(url, params):
+    tasks = [async_make_request(url=url, params=params) for _ in range(65)]
 
     await asyncio.gather(*tasks)
-
+    
+def main(url, params):
+    with ThreadPoolExecutor() as executor:
+        futures = [ executor.submit(make_request, url=url, params=params) for x in range(65)]
+        for future in futures:
+            try:
+                data = future.result()
+            except Exception as e:
+                print(e)
+            else:
+                print(data)
 
 if __name__ == "__main__":
-    asyncio.run(main(url=URL, params=PARAMS))
+    asyncio.run(async_main(url=URL, params=PARAMS))
+# if __name__ == "__main__":
+#     main(url=URL, params=PARAMS)
