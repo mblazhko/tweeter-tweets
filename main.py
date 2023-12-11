@@ -1,16 +1,13 @@
-import time
 from fastapi import FastAPI
-from scrappers import NitterScraper, get_page
-import uvicorn
+from scrappers import RequestScraper
+
 app = FastAPI()
 
 
 @app.get("/search")
 async def tweet_search(q: str, since: str = None, until: str = None):
-    start = time.time()
-    result = await get_page(q=q, since=since, until=until)
-    end = time.time() - start
-    print(end)
+    scraper = RequestScraper()
+    result = await scraper.run_scraper(q=q, since=since, until=until)
     return {"tweets": result}
 
 if __name__ ==  "__main__":

@@ -7,9 +7,6 @@ class Scraper(ABC):
 
     @abstractmethod
     async def scrape_tweeter_tweets_by_date(
-            self,
-            query: str,
-            since: str = None,
-            until: str = None
+        self, query: str, since: str = None, until: str = None
     ) -> dict:
         pass

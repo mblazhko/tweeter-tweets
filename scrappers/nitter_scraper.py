@@ -20,10 +20,7 @@ HEADLESS = os.getenv("HEADLESS")
 
 class NitterScraper(Scraper):
     async def scrape_tweeter_tweets_by_date(
-            self,
-            query: str,
-            since: str = None,
-            until: str = None
+        self, query: str, since: str = None, until: str = None
     ) -> dict:
         async with async_playwright() as p:
             if not self._browser:
@@ -45,9 +42,7 @@ class NitterScraper(Scraper):
         try:
             result = await self.__scrape_pages(page)
         except TargetClosedError:
-            return {
-                "message": "There is no results in your request"
-            }
+            return {"message": "There is no results in your request"}
 
         return result
 
@@ -70,12 +65,7 @@ class NitterScraper(Scraper):
         next_page_link = await page.get_by_role(
             "link", name="Load more"
         ).get_attribute("href")
-        await page.goto(
-            urljoin(
-                TWEET_SEARCH_URL,
-                next_page_link
-            )
-        )
+        await page.goto(urljoin(TWEET_SEARCH_URL, next_page_link))
 
         return one_page_data
 
@@ -108,13 +98,11 @@ class NitterScraper(Scraper):
         return link.split("/")[1]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     scraper = NitterScraper()
     result = asyncio.run(
         scraper.scrape_tweeter_tweets_by_date(
-            query="python",
-            since="2023-12-06",
-            until="2023-12-07"
+            query="python", since="2023-12-06", until="2023-12-07"
         )
     )
 
