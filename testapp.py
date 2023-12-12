@@ -17,8 +17,8 @@ import httpx
 
 async def async_make_request(url, params):
     async with httpx.AsyncClient(timeout=100000) as client:
-        response = await client.get(url, params=params)
-        print(response.status_code, response.json())
+        response = await client.post(url, params=params)
+        print(response.url, response.json())
 
 def make_request(url, params):
     with httpx.Client(timeout=10000) as client:

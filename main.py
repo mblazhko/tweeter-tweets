@@ -2,7 +2,7 @@ from fake_http_header import FakeHttpHeader
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from concurrent_scrapper import async_main
+from concurrent_scrapper import ScrapperByDate
 
 app = FastAPI()
 
@@ -16,7 +16,8 @@ class Query(BaseModel):
 async def tweet_search(query_list: list[Query]):
     header = FakeHttpHeader().as_header_dict()
     params = [query.model_dump() for query in query_list]
-    # params = {'q': q, 'since': since, 'until': until}
+
     #TODO: add asyncio geather chunks
-    result = await async_main(urls="https://nitter.net/search", headers=header, params=params)
-    return result
+    async with ScrapperByDate(headers=header) as by_date_scraper:
+        result = await by_date_scraper.async_run_scraper(urls="https://nitter.net/search", params=params)
+        return result
