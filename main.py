@@ -1,16 +1,21 @@
+from fake_http_header import FakeHttpHeader
 from fastapi import FastAPI
-from scrappers import RequestScraper
-import uvicorn
+from pydantic import BaseModel
 
+from concurrent_scrapper import async_main
 
 app = FastAPI()
 
+class Query(BaseModel):
+    q: str
+    since: str
+    until: str
 
-@app.get("/search")
-async def tweet_search(q: str, since: str = None, until: str = None):
-    scraper = RequestScraper()
-    result = await scraper.run_scraper(q=q, since=since, until=until)
-    return {"tweets": result}
 
-if __name__ ==  "__main__":
-    uvicorn.run("main:app", workers=12)
+@app.post("/search")
+async def tweet_search(query_list: list[Query]):
+    header = FakeHttpHeader().as_header_dict()
+    params = [query.model_dump() for query in query_list]
+    # params = {'q': q, 'since': since, 'until': until}
+    result = await async_main(urls="https://nitter.net/search", headers=header, params=params)
+    return result
