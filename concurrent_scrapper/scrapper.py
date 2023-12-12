@@ -16,12 +16,29 @@ async def get_with_aiohttp(
     session: ClientSession,
     url: str,
     params: dict = {},
-    headers: dict = {},
     proxy: str | None = None,
     timeout: int = 10,
 ) -> (int, dict, bytes):
+    """
+    Summary:
+        The get_with_aiohttp function is an asynchronous function that uses the aiohttp library to make HTTP GET requests.
+        It takes in a ClientSession object, a URL,
+        and optional parameters, headers, proxy, and timeout.
+        The function retries the request up to 5 times with random wait times between 1 and 3 seconds using the tenacity library.
+        It returns a tuple containing the HTTP status code,
+        response headers, and response content.
+    Arguments:
+        :param session:
+        :param url:
+        :param params:
+        :param headers:
+        :param proxy:
+        :param timeout:
+        :return:
+    """
+
     response = await session.get(
-        url=url, params=params, headers=headers, proxy=proxy, timeout=timeout
+        url=url, params=params, proxy=proxy, timeout=timeout
     )
 
     response_content = await response.read()
@@ -33,7 +50,6 @@ async def get_with_aiohttp_parallel(
     session: ClientSession,
     urls_list: [str],
     params: dict = {},
-    headers: dict = {},
     proxy: str | None = None,
     timeout: int = 10,
 ):
@@ -64,14 +80,14 @@ async def get_with_aiohttp_parallel(
     ):
         results = await asyncio.gather(
             *[
-                get_with_aiohttp(session, url, param, headers, proxy, timeout)
+                get_with_aiohttp(session, url, param, proxy, timeout)
                 for url, param in zip(urls_list, params)
             ]
         )
     elif isinstance(urls_list, list):
         results = await asyncio.gather(
             *[
-                get_with_aiohttp(session, url, params, headers, proxy, timeout)
+                get_with_aiohttp(session, url, params, proxy, timeout)
                 for url in urls_list
             ]
         )
@@ -79,14 +95,14 @@ async def get_with_aiohttp_parallel(
         results = await asyncio.gather(
             *[
                 get_with_aiohttp(
-                    session, urls_list, param, headers, proxy, timeout
+                    session, urls_list, param, proxy, timeout
                 )
                 for param in params
             ]
         )
     else:
         results = await get_with_aiohttp(
-            session, urls_list, params, headers, proxy, timeout
+            session, urls_list, params, proxy, timeout
         )
     return results
 
@@ -154,12 +170,12 @@ async def async_main(
         The scraped data is stored in a dictionary and returned as the output.
 
     Example Usage:
-        >>>urls = ["https://example.com/page1", "https://example.com/page2"]
-        >>>params = [{"param1": "value1"}, {"param2": "value2"}]
-        >>>headers = {"User-Agent": "Mozilla/5.0"}
+        urls = ["https://example.com/page1", "https://example.com/page2"]
+        params = [{"param1": "value1"}, {"param2": "value2"}]
+        headers = {"User-Agent": "Mozilla/5.0"}
 
-        >>>Result = await async_main(urls, params, headers)
-        >>>print(result)
+        result = await async_main(urls, params, headers)
+        print(result)
 
     Output:
         {
@@ -181,9 +197,9 @@ async def async_main(
         :param params: The headers to include in the requests.
     """
 
-    async with ClientSession() as session:
+    async with ClientSession(headers=headers) as session:
         results = await get_with_aiohttp_parallel(
-            session, urls, params, headers
+            session, urls, params
         )
 
     scraped_results = {}
