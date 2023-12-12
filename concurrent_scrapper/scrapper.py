@@ -1,11 +1,9 @@
-import time
 from concurrent.futures import ThreadPoolExecutor
 from aiohttp import ClientSession
 import asyncio
 from bs4 import BeautifulSoup
 from dateutil import parser
-import random
-
+from tenacity import retry, stop_after_attempt, wait_random
 
 def transform_to_datetime(date: str) -> str:
     date_string = date.replace("·", "")
@@ -13,6 +11,7 @@ def transform_to_datetime(date: str) -> str:
     return str(timestamp)
 
 
+@retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=3))
 async def get_with_aiohttp(
     session: ClientSession,
     url: str,
@@ -24,25 +23,8 @@ async def get_with_aiohttp(
     response = await session.get(
         url=url, params=params, headers=headers, proxy=proxy, timeout=timeout
     )
-    counter = 0
-    while response.status != 200:
-        if counter >= 5:
-            break
-        await asyncio.sleep(random.randint(1, 3))
-        response = await session.get(
-            url=url,
-            params=params,
-            headers=headers,
-            proxy=proxy,
-            timeout=timeout,
-        )
-        counter += 1
-        print(counter)
-    response_content = None
-    try:
-        response_content = await response.read()
-    except:
-        ...
+
+    response_content = await response.read()
 
     return response_content
 
@@ -55,7 +37,25 @@ async def get_with_aiohttp_parallel(
     proxy: str | None = None,
     timeout: int = 10,
 ):
-    start_time = time.time()
+    """
+    Summary:
+        The get_with_aiohttp_parallel function is an asynchronous function
+        that takes in a ClientSession object,
+        a list of URLs, and optional parameters, headers, proxy, and timeout.
+        It uses the get_with_aiohttp function
+        to make parallel asynchronous HTTP requests to the specified URLs with the given parameters.
+        The function returns a list of results,
+        where each result corresponds to the response of a specific URL.
+
+    Arguments:
+        :param session: The aiohttp ClientSession object used to make HTTP requests.
+        :param urls_list: A list of URLs to make HTTP requests to.
+        :param params: Optional parameters to include in the requests. It can be a single dictionary or a list of dictionaries, where each dictionary corresponds to the parameters for a specific URL.
+        :param headers: Optional headers to include in the requests.
+        :param proxy: Optional proxy URL to use for the requests.
+        :param timeout: Optional timeout value for the requests in seconds.
+        :return:
+    """
     results = None
     if (
         isinstance(urls_list, list)
@@ -85,15 +85,31 @@ async def get_with_aiohttp_parallel(
             ]
         )
     else:
-        results = await get_with_aiohttp(session, urls_list, params, headers, proxy, timeout)
-    # print(f"{urls_list=}")
-    # print(f"{params=}")
-    # exit()
-    return results, time.time() - start_time
+        results = await get_with_aiohttp(
+            session, urls_list, params, headers, proxy, timeout
+        )
+    return results
 
 
 def scrape(content: bytes) -> dict:
-    assert isinstance(content, (bytes, str))
+    """
+    Summary:
+        The scrape function takes in HTML content as input
+        and extracts relevant data from it.
+        It uses BeautifulSoup to parse the content
+        and filter out specific elements.
+        It then iterates over the filtered elements
+        to extract data such as username,
+        tweet ID, raw content, and date.
+        The extracted data is stored in a dictionary and returned as the output.
+    Arguments:
+        :param content:
+        :return:
+    """
+
+    if not isinstance(content, (bytes, str)):
+        raise TypeError("Content must be of type bytes or str.")
+
     def get_one_tweet_data(card) -> dict:
         username = card.select_one(".username").text
         tweet = card.select_one(".tweet-link")
@@ -111,7 +127,7 @@ def scrape(content: bytes) -> dict:
         }
         return output
 
-    soup = BeautifulSoup(content, "html.parser")
+    soup = BeautifulSoup(content, "lxml")
     cards = list(
         filter(
             lambda x: len(x.get("class")) == 1,
@@ -124,25 +140,51 @@ def scrape(content: bytes) -> dict:
     return output
 
 
-async def async_main(urls, params, headers):
-    print("-" * 40)
-    # Benchmark aiohttp
-    start_time = time.time()
-    speeds_aiohttp = []
+async def async_main(
+    urls: str | list[str], params: dict | list[dict], headers: dict
+) -> dict[str, dict]:
+    """
+    Summary:
+        This code defines an async_main function that takes in URLs,
+        parameters, and headers as inputs.
+        It uses the get_with_aiohttp_parallel function
+        to make asynchronous HTTP requests and retrieve the responses.
+        The responses are then passed to the scrape function,
+        which extracts relevant data from the HTML content.
+        The scraped data is stored in a dictionary and returned as the output.
+
+    Example Usage:
+        >>>urls = ["https://example.com/page1", "https://example.com/page2"]
+        >>>params = [{"param1": "value1"}, {"param2": "value2"}]
+        >>>headers = {"User-Agent": "Mozilla/5.0"}
+
+        >>>Result = await async_main(urls, params, headers)
+        >>>print(result)
+
+    Output:
+        {
+          "tweet_id1": {
+            "username": "user1",
+            "raw_content": "This is a tweet",
+            "date": "2022-01-01 12:00:00"
+          },
+          "tweet_id2": {
+            "username": "user2",
+            "raw_content": "Another tweet",
+            "date": "2022-01-02 10:30:00"
+          }
+        }
+
+    Arguments:
+        :param headers: The URLs to make HTTP requests to.
+        :param urls: The parameters to include in the requests.
+        :param params: The headers to include in the requests.
+    """
+
     async with ClientSession() as session:
-        results, t = await get_with_aiohttp_parallel(
+        results = await get_with_aiohttp_parallel(
             session, urls, params, headers
         )
-        v = len(urls) / t
-        print(
-            "AIOHTTP: Took "
-            + str(round(t, 2))
-            + " s, with speed of "
-            + str(round(v, 2))
-            + " r/s"
-        )
-        speeds_aiohttp.append(v)
-    print("-" * 40)
 
     scraped_results = {}
 
@@ -153,29 +195,3 @@ async def async_main(urls, params, headers):
         else:
             scraped_results.update(scrape(results))
     return scraped_results
-
-
-if __name__ == "__main__":
-    # URL list
-    URL = "https://nitter.net/search"
-    HEADERS = {
-        "authority": "nitter.net",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,/;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "uk,uk-UA;q=0.9,sk;q=0.8,en-US;q=0.7,en;q=0.6",
-    }
-    urls = [URL for i in range(0, 65)]
-    params = {
-        "q": "python",
-        "since": "2023-1-01",
-        "until": "2023-2-01",
-    }
-    speeds_aiohttp, scraped, a = asyncio.run(async_main(urls, params, HEADERS))
-    # Calculate averages
-    avg_speed_aiohttp = sum(speeds_aiohttp) / len(speeds_aiohttp)
-    print("--------------------")
-    print("AVG SPEED AIOHTTP: " + str(round(avg_speed_aiohttp, 2)) + " r/s")
-    print("IT TOTALLY TOOKS:" + str(a))
-    input()
-    print([str(x) for x in scraped], sep="\n" + "-" * 40)
