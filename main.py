@@ -17,5 +17,6 @@ async def tweet_search(query_list: list[Query]):
     header = FakeHttpHeader().as_header_dict()
     params = [query.model_dump() for query in query_list]
     # params = {'q': q, 'since': since, 'until': until}
+    #TODO: add asyncio geather chunks
     result = await async_main(urls="https://nitter.net/search", headers=header, params=params)
     return result
