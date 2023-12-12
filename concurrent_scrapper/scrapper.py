@@ -38,22 +38,24 @@ async def get_with_aiohttp_parallel(session: ClientSession, urls_list: [str], pa
     results = await asyncio.gather(*[get_with_aiohttp(session, url, params, headers, proxy, timeout) for url in urls_list])
     return results, time.time() - start_time
 
-def get_one_tweet_data(card)->dict:
-    username = card.select_one(".username").text
-    tweet = card.select_one(".tweet-link")
-    tweet_id = tweet.get("href").split("/")[-1].replace("#m", "")
-    raw_content = card.select_one(".tweet-content.media-body").text
-    date_time = card.select_one(".tweet-date>a").get("title").replace("·", "")
-    output = {
-        tweet_id: {
-            "username": username,
-            "raw_content": raw_content,
-            "date": transform_to_datetime(date_time),
-        }
-    }
-    return output
+
 
 def scrape(content:bytes)->dict:
+    def get_one_tweet_data(card)->dict:
+        username = card.select_one(".username").text
+        tweet = card.select_one(".tweet-link")
+        tweet_id = tweet.get("href").split("/")[-1].replace("#m", "")
+        raw_content = card.select_one(".tweet-content.media-body").text
+        date_time = card.select_one(".tweet-date>a").get("title").replace("·", "")
+        output = {
+            tweet_id: {
+                "username": username,
+                "raw_content": raw_content,
+                "date": transform_to_datetime(date_time),
+            }
+        }
+        return output
+    
     soup = BeautifulSoup(content, "html.parser")
     cards = list(filter(lambda x: len(x.get("class")) == 1, soup.select("div.timeline-item"))) 
     output = {}
