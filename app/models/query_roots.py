@@ -2,7 +2,7 @@ from .query import Query
 from concurrent_scrapper import ScrapperByDate
 from app import app
 from fake_http_header import FakeHttpHeader
-
+from fastapi.responses import Response
 
 @app.post("/search")
 async def tweet_search(query_list: list[Query]):
@@ -35,4 +35,4 @@ async def tweet_search(query_list: list[Query]):
     #TODO: add asyncio geather chunks
     async with ScrapperByDate(headers=header) as by_date_scraper:
         result = await by_date_scraper.async_run_scraper(urls="https://nitter.net/search", params=params)
-        return result
+        return result or Response("No data found", status_code=404)
