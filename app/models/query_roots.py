@@ -35,4 +35,4 @@ async def tweet_search(query_list: list[Query]):
     #TODO: add asyncio geather chunks
     async with ScrapperByDate(headers=header) as by_date_scraper:
         result = await by_date_scraper.async_run_scraper(urls="https://nitter.net/search", params=params)
-        return result or Response({"msg":"No data found"}, status_code=404)
+        return result or Response("No data found", status_code=404)
