@@ -17,7 +17,7 @@ class MyUser(HttpUser):
         }
         payload = [
         {
-        "query": "acuta",
+        "query": "evaelfie",
         "since_time": 1702490520,
         "until_time": 1702490580
         }

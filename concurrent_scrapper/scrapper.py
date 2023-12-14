@@ -68,13 +68,12 @@ class ScrapperByDate(ABCScraper):
         results = await self.__get_result_with_aiohttp_parallel(urls, params)
 
         scraped_results = {}
-
-        with ThreadPoolExecutor() as executor:
-            if isinstance(results, list):
+        if isinstance(results, list):
+            with ThreadPoolExecutor() as executor:
                 for scraped in executor.map(self.__parse, results):
                     scraped_results.update(scraped)
-            else:
-                scraped_results.update(self.__parse(results))
+        else:
+            scraped_results.update(self.__parse(results))
         return scraped_results
     
     async def __get_result_with_aiohttp_parallel(
