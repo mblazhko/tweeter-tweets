@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from datetime import date
+# from datetime import date, datetime
 
 
 class Query(BaseModel):
-    q: str
-    since: date
-    until: date
+    query: str
+    since_time: int
+    until_time: int
