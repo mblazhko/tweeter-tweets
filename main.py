@@ -4,5 +4,5 @@ from app import app
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, filename="logs.log", filemode="w")
     uvicorn.run("main:app",workers=10, host="0.0.0.0", port=80)
