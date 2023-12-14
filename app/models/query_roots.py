@@ -24,7 +24,7 @@ async def tweet_search(query_list: list[Query]):
         params.append(param)
         
     # params = [query.model_dump(mode='json') for query in query_list if Query.model_validate(query)]
-    logging.info(params)
+    print(f'{params=}')
     #TODO: add asyncio geather chunks
     async with ScrapperByDate(headers=header) as by_date_scraper:
         result = await by_date_scraper.async_run_scraper(urls="https://nitter.net/search", params=params)
