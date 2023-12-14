@@ -5,7 +5,7 @@ import json
 
 class MyUser(HttpUser):
     host = "http://178.63.193.205"
-    wait_time = between(1, 2)
+    wait_time = between(0.5, 0.8)
 
 
 
@@ -40,5 +40,5 @@ if __name__ == "__main__":
 
 
     environment.create_web_ui("localhost", 8089)
-    environment.runner.start(6, spawn_rate=1)
+    environment.runner.start(65, spawn_rate=1)
     environment.runner.greenlet.join()
