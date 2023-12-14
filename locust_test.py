@@ -5,7 +5,7 @@ import random
 
 class MyUser(HttpUser):
     host = "http://178.63.193.205"
-    wait_time = between(0.5, 0.8)
+    wait_time = between(2,3)
 
     @task
     def my_task(self):
