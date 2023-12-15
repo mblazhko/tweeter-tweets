@@ -1,3 +1,4 @@
+import json
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
 from fake_http_header import FakeHttpHeader
@@ -6,7 +7,7 @@ from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt, wait_random
 
 from concurrent_scrapper.abstract_scraper import ABCScraper
-from concurrent_scrapper.utils import transform_to_datetime
+from concurrent_scrapper.utils import transform_to_datetime, get_redis_client
 
 
 class ScrapperByDate(ABCScraper):
@@ -59,6 +60,13 @@ class ScrapperByDate(ABCScraper):
             and the values are dictionaries containing the username,
             raw content, and date of each tweet.
         """
+        redis_client = get_redis_client()
+
+        cache_key = str(params)
+        scraped_results = redis_client.get(cache_key)
+
+        if scraped_results:
+            return json.loads(scraped_results)
 
         if not self._session:
             raise NotImplementedError(
@@ -74,6 +82,9 @@ class ScrapperByDate(ABCScraper):
                     scraped_results.update(scraped)
         else:
             scraped_results.update(self.__parse(results))
+
+        redis_client.set(cache_key, json.dumps(scraped_results).encode("utf-8"))
+
         return scraped_results
     
     async def __get_result_with_aiohttp_parallel(
