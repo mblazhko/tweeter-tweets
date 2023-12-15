@@ -8,4 +8,4 @@ def transform_to_datetime(date: str) -> str:
     return str(timestamp)
 
 def get_redis_client():
-    return redis.StrictRedis(host='localhost', port=6379, db=0)
+    return redis.StrictRedis(host='redis', port=6379, db=0)
