@@ -6,7 +6,6 @@ from fastapi.responses import Response
 import logging
 
 
-
 @app.post("/search")
 async def tweet_search(query_list: list[Query]):
     header = FakeHttpHeader().as_header_dict()
