@@ -64,7 +64,7 @@ class ScrapperByDate(ABCScraper):
 
         cache_key = str(params)
         scraped_results = redis_client.get(cache_key)
-
+        print(scraped_results)
         if scraped_results:
             return json.loads(scraped_results)
 
@@ -83,11 +83,12 @@ class ScrapperByDate(ABCScraper):
         else:
             scraped_results.update(self.__parse(results))
 
-        redis_client.set(
-            cache_key,
-            json.dumps(scraped_results).encode("utf-8"),
-            ex=40
-        )
+        if scraped_results:
+            redis_client.set(
+                cache_key,
+                json.dumps(scraped_results).encode("utf-8"),
+                ex=40
+            )
 
         return scraped_results
     
