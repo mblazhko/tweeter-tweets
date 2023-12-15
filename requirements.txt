@@ -11,3 +11,4 @@ Requests==2.31.0
 stem==1.8.2
 tenacity==8.2.3
 uvicorn==0.24.0.post1
+lxml==4.9.3
